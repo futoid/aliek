@@ -1,0 +1,43 @@
+<head>
+  <style>
+    @font-face {
+      font-family: "TheFont";
+      src: url("https://garet.typeforward.com/assets/fonts/shared/TFMixVF.woff2")
+        format("woff2");
+    }
+
+    body.breathe-animation {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: black;
+      height: 100vh;
+    }
+
+    .breathe-animation span {
+      font-family: "TheFont";
+      font-size: clamp(8vw, 17vw, 43vh);
+      color: white;
+      text-align: center;
+
+      animation: letter-breathe 6s ease-in-out infinite;
+    }
+
+    @keyframes letter-breathe {
+      from,
+      to {
+        font-variation-settings: "wght" 100;
+      }
+
+      50% {
+        font-variation-settings: "wght" 900;
+      }
+    }
+  </style>
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico" />
+  <title>aliek</title>
+</head>
+
+<body class="breathe-animation">
+  <span>aliek</span>
+</body>
