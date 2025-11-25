@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Management JWT – Project Structure and Code</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 960px;
+      margin: 32px auto;
+      padding: 0 16px 40px;
+      line-height: 1.5;
+      background: #fafafa;
+      color: #222;
+    }
+    h1, h2, h3 {
+      font-weight: 600;
+    }
+    h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    h2 { font-size: 1.4rem; margin-top: 2rem; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+    h3 { font-size: 1.1rem; margin-top: 1.2rem; }
+    .path {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background: #eee;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    pre {
+      background: #111;
+      color: #f8f8f2;
+      padding: 14px 16px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    ul {
+      margin-left: 1.2rem;
+    }
+    section {
+      margin-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>User Management with JWT – Spring Boot Project</h1>
+  <p>A simple Spring Boot application demonstrating user management and JWT-based security.</p>
+
+  <section>
+    <h2>Project Files</h2>
+    <ul>
+      <li><span class="path">pom.xml</span></li>
+      <li><span class="path">src/main/java/com/futoid/spring/usermanagement/UserManagementJwtApplication.java</span></li>
+      <li><span class="path">src/main/resources/application.properties</span></li>
+      <li><span class="path">src/main/java/com/futoid/spring/usermanagement/dto/...</span></li>
+      <li><span class="path">src/main/java/com/futoid/spring/usermanagement/entity/User.java</span></li>
+      <li><span class="path">src/main/java/com/futoid/spring/usermanagement/repository/UserRepository.java</span></li>
+      <li><span class="path">src/main/java/com/futoid/spring/usermanagement/services/...</span></li>
+      <li><span class="path">src/main/java/com/futoid/spring/usermanagement/controller/...</span></li>
+      <li><span class="path">src/main/java/com/futoid/spring/usermanagement/config/SecurityConfig.java</span></li>
+      <li><span class="path">src/main/java/com/futoid/spring/usermanagement/util/JwtUtil.java</span></li>
+      <li><span class="path">src/main/java/com/futoid/spring/usermanagement/security/JwtAuthenticationFilter.java</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="path">pom.xml</span></h2>
+    <pre><code>&lt;dependencies&gt;
+  &lt;!-- Spring Boot Starter Web --&gt;
+  &lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+  &lt;/dependency&gt;
+
+  &lt;!-- Spring Boot Starter Security --&gt;
+  &lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-security&lt;/artifactId&gt;
+  &lt;/dependency&gt;
+
+  &lt;!-- Spring Boot Starter Data JPA --&gt;
+  &lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-data-jpa&lt;/artifactId&gt;
+  &lt;/dependency&gt;
+
+  &lt;!-- JWT Library --&gt;
+  &lt;dependency&gt;
+    &lt;groupId&gt;io.jsonwebtoken&lt;/groupId&gt;
+    &lt;artifactId&gt;jjwt-api&lt;/artifactId&gt;
+    &lt;version&gt;0.12.3&lt;/version&gt;
+  &lt;/dependency&gt;
+  &lt;dependency&gt;
+    &lt;groupId&gt;io.jsonwebtoken&lt;/groupId&gt;
+    &lt;artifactId&gt;jjwt-impl&lt;/artifactId&gt;
+    &lt;version&gt;0.12.3&lt;/version&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+  &lt;/dependency&gt;
+  &lt;dependency&gt;
+    &lt;groupId&gt;io.jsonwebtoken&lt;/groupId&gt;
+    &lt;artifactId&gt;jjwt-jackson&lt;/artifactId&gt;
+    &lt;version&gt;0.12.3&lt;/version&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+  &lt;/dependency&gt;
+
+  &lt;!-- Database (H2 for development) --&gt;
+  &lt;dependency&gt;
+    &lt;groupId&gt;com.h2database&lt;/groupId&gt;
+    &lt;artifactId&gt;h2&lt;/artifactId&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+  &lt;/dependency&gt;
+
+  &lt;!-- Lombok --&gt;
+  &lt;dependency&gt;
+    &lt;groupId&gt;org.projectlombok&lt;/groupId&gt;
+    &lt;artifactId&gt;lombok&lt;/artifactId&gt;
+    &lt;optional&gt;true&lt;/optional&gt;
+  &lt;/dependency&gt;
+&lt;/dependencies&gt;
+</code></pre>
+  </section>
+
+  <section>
+    <h2>Main Application</h2>
+    <h3><span class="path">UserManagementJwtApplication.java</span></h3>
+    <pre><code>package com.futoid.spring.usermanagement;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class UserManagementJwtApplication {
+
+  public static void main(String[] args) {
+    SpringApplication.run(UserManagementJwtApplication.class, args);
+  }
+
+}
+</code></pre>
+  </section>
+
+  <section>
+    <h2>Configuration</h2>
+    <h3><span class="path">application.properties</span></h3>
+    <pre><code>spring.application.name=User-Management-JWT
+
+# Server Configuration
+server.port=8080
+
+# Database Configuration (H2)
+spring.datasource.url=jdbc:h2:mem:userdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.jpa.hibernate.ddl-auto=update
+spring.h2.console.enabled=true
+
+# JWT Configuration
+jwt.secret=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+jwt.expiration=86400000  # 1 day
+</code></pre>
+  </section>
+
+  <section>
+    <h2>DTOs</h2>
+
+    <h3><span class="path">dto/AuthResponse.java</span></h3>
+    <pre><code>package com.futoid.spring.usermanagement.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class AuthResponse {
+  private String token;
+  private String type = "Bearer";
+  private Long id;
+  private String username;
+  private String email;
+  private String role;
+  
+  public String getToken() {
+    return token;
+  }
+
+  public void setToken(String token) {
+    this.token = token;
+  }
+
+  public String getType() {
+    return type;
+  }
+
+  public void setType(String type) {
+    this.type = type;
+  }
+
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public String getUsername() {
+    return username;
+  }
+
+  public void setUsername(String username) {
+    this.username = username;
+  }
+
+  public String getEmail() {
+    return email;
+  }
+
+  public void setEmail(String email) {
+    this.email = email;
+  }
+
+  public String getRole() {
+    return role;
+  }
+
+  public void setRole(String role) {
+    this.role = role;
+  }
+
+  public AuthResponse(String token, Long id, String username, String email, String role) {
+    this.token = token;
+    this.id = id;
+    this.username = username;
+    this.email = email;
+    this.role = role;
+  }
+}
+</code></pre>
+
+    <h3><span class="path">dto/LoginRequest.java</span></h3>
+    <pre><code>package com.futoid.spring.usermanagement.dto;
+
+import lombok.Data;
+
+@Data
+public class LoginRequest {
+  private String username;
+  private String password;
+
+  public String getUsername() {
+    return username;
+  }
+  public void setUsername(String username) {
+    this.username = username;
+  }
+  public String getPassword() {
+    return password;
+  }
+  public void setPassword(String password) {
+    this.password = password;
+  }
+}
+</code></pre>
+
+    <h3><span class="path">dto/MessageResponse.java</span></h3>
+    <pre><code>package com.futoid.spring.usermanagement.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class MessageResponse {
+  private String message;
+
+  public MessageResponse(String message) {
+    this.message = message;
+  }
+
+  public String getMessage() {
+    return message;
+  }
+
+  public void setMessage(String message) {
+    this.message = message;
+  }
+}
+</code></pre>
+
+    <h3><span class="path">dto/SignupRequest.java</span></h3>
+    <pre><code>package com.futoid.spring.usermanagement.dto;
+
+import lombok.Data;
+
+@Data
+public class SignupRequest {
+  private String username;
+  private String password;
+  private String email;
+  private String role;
+
+  public String getUsername() {
+    return username;
+  }
+  public void setUsername(String username) {
+    this.username = username;
+  }
+  public String getPassword() {
+    return password;
+  }
+  public void setPassword(String password) {
+    this.password = password;
+  }
+  public String getEmail() {
+    return email;
+  }
+  public void setEmail(String email) {
+    this.email = email;
+  }
+  public String getRole() {
+    return role;
+  }
+  public void setRole(String role) {
+    this.role = role;
+  }
+}
+</code></pre>
+  </section>
+
+  <section>
+    <h2>Entity</h2>
+    <h3><span class="path">entity/User.java</span></h3>
+    <pre><code>package com.futoid.spring.usermanagement.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "users")
+@NoArgsConstructor
+@AllArgsConstructor
+public class User {
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  @Column(unique = true, nullable = false)
+  private String username;
+
+  @Column(nullable = false)
+  private String password;
+
+  @Column(unique = true, nullable = false)
+  private String email;
+
+  @Column(nullable = false)
+  private String role = "USER"; // Default role
+
+  public Long getId() {
+    return id;
+  }
+  public void setId(Long id) {
+    this.id = id;
+  }
+  public String getUsername() {
+    return username;
+  }
+  public void setUsername(String username) {
+    this.username = username;
+  }
+  public String getPassword() {
+    return password;
+  }
+  public void setPassword(String password) {
+    this.password = password;
+  }
+  public String getEmail() {
+    return email;
+  }
+  public void setEmail(String email) {
+    this.email = email;
+  }
+  public String getRole() {
+    return role;
+  }
+  public void setRole(String role) {
+    this.role = role;
+  }
+}
+</code></pre>
+  </section>
+
+  <section>
+    <h2>Repository</h2>
+    <h3><span class="path">repository/UserRepository.java</span></h3>
+    <pre><code>package com.futoid.spring.usermanagement.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import com.futoid.spring.usermanagement.entity.User;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface UserRepository extends JpaRepository&lt;User, Long&gt; {
+  Optional&lt;User&gt; findByUsername(String username);
+  Optional&lt;User&gt; findByEmail(String email);
+  boolean existsByUsername(String username);
+  boolean existsByEmail(String email);
+}
+</code></pre>
+  </section>
+
+  <section>
+    <h2>Services</h2>
+
+    <h3><span class="path">services/CustomUserDetailsService.java</span></h3>
+    <pre><code>package com.futoid.spring.usermanagement.services;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import com.futoid.spring.usermanagement.entity.User;
+import com.futoid.spring.usermanagement.repository.UserRepository;
+
+import java.util.Collections;
+
+@Service
+public class CustomUserDetailsService implements UserDetailsService {
+
+  @Autowired
+  private UserRepository userRepository;
+
+  @Override
+  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    User user = userRepository.findByUsername(username)
+        .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+
+    return new org.springframework.security.core.userdetails.User(
+        user.getUsername(),
+        user.getPassword(),
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
+    );
+  }
+}
+</code></pre>
+
+    <h3><span class="path">services/UserService.java</span></h3>
+    <pre><code>package com.futoid.spring.usermanagement.services;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.futoid.spring.usermanagement.dto.AuthResponse;
+import com.futoid.spring.usermanagement.dto.LoginRequest;
+import com.futoid.spring.usermanagement.dto.SignupRequest;
+import com.futoid.spring.usermanagement.entity.User;
+import com.futoid.spring.usermanagement.repository.UserRepository;
+import com.futoid.spring.usermanagement.util.JwtUtil;
+
+@Service
+public class UserService {
+
+  @Autowired
+  private UserRepository userRepository;
+
+  @Autowired
+  private PasswordEncoder passwordEncoder;
+
+  @Autowired
+  private AuthenticationManager authenticationManager;
+
+  @Autowired
+  private JwtUtil jwtUtil;
+
+  public User signup(SignupRequest signupRequest) {
+    if (userRepository.existsByUsername(signupRequest.getUsername())) {
+      throw new RuntimeException("Username is already taken!");
+    }
+
+    if (userRepository.existsByEmail(signupRequest.getEmail())) {
+      throw new RuntimeException("Email is already in use!");
+    }
+
+    User user = new User();
+    user.setUsername(signupRequest.getUsername());
+    user.setEmail(signupRequest.getEmail());
+    user.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
+    user.setRole(signupRequest.getRole() != null ? signupRequest.getRole() : "USER");
+
+    return userRepository.save(user);
+  }
+
+  public AuthResponse login(LoginRequest loginRequest) {
+    Authentication authentication = authenticationManager.authenticate(
+        new UsernamePasswordAuthenticationToken(
+            loginRequest.getUsername(),
+            loginRequest.getPassword()
+        )
+    );
+
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+    String jwt = jwtUtil.generateToken(authentication);
+
+    User user = userRepository.findByUsername(loginRequest.getUsername())
+        .orElseThrow(() -> new RuntimeException("User not found"));
+
+    return new AuthResponse(jwt, user.getId(), user.getUsername(), user.getEmail(), user.getRole());
+  }
+}
+</code></pre>
+  </section>
+
+  <section>
+    <h2>Controllers</h2>
+
+    <h3><span class="path">controller/AuthController.java</span></h3>
+    <pre><code>package com.futoid.spring.usermanagement.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import com.futoid.spring.usermanagement.dto.AuthResponse;
+import com.futoid.spring.usermanagement.dto.LoginRequest;
+import com.futoid.spring.usermanagement.dto.MessageResponse;
+import com.futoid.spring.usermanagement.dto.SignupRequest;
+import com.futoid.spring.usermanagement.entity.User;
+import com.futoid.spring.usermanagement.services.UserService;
+
+@RestController
+@RequestMapping("/api/auth")
+@CrossOrigin(origins = "*", maxAge = 3600)
+public class AuthController {
+
+  @Autowired
+  private UserService userService;
+
+  @PostMapping("/signup")
+  public ResponseEntity&lt;?&gt; registerUser(@RequestBody SignupRequest signupRequest) {
+    try {
+      User user = userService.signup(signupRequest);
+      return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+    } catch (RuntimeException e) {
+      return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+    }
+  }
+
+  @PostMapping("/login")
+  public ResponseEntity&lt;?&gt; authenticateUser(@RequestBody LoginRequest loginRequest) {
+    try {
+      AuthResponse authResponse = userService.login(loginRequest);
+      return ResponseEntity.ok(authResponse);
+    } catch (Exception e) {
+      return ResponseEntity.badRequest().body(new MessageResponse("Invalid username or password!"));
+    }
+  }
+}
+</code></pre>
+
+    <h3><span class="path">controller/TestController.java</span></h3>
+    <pre><code>package com.futoid.spring.usermanagement.controller;
+
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/test")
+public class TestController {
+
+  @GetMapping("/public")
+  public String publicEndpoint() {
+    return "This is a public endpoint";
+  }
+
+  @GetMapping("/user")
+  @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+  public String userEndpoint() {
+    return "This is a protected endpoint for users";
+  }
+
+  @GetMapping("/admin")
+  @PreAuthorize("hasRole('ADMIN')")
+  public String adminEndpoint() {
+    return "This is a protected endpoint for admins only";
+  }
+}
+</code></pre>
+  </section>
+
+  <section>
+    <h2>Security Configuration</h2>
+    <h3><span class="path">config/SecurityConfig.java</span></h3>
+    <pre><code>package com.futoid.spring.usermanagement.config;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.futoid.spring.usermanagement.security.JwtAuthenticationFilter;
+import com.futoid.spring.usermanagement.services.CustomUserDetailsService;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig {
+
+  @Autowired
+  private CustomUserDetailsService userDetailsService;
+
+  @Autowired
+  private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
+
+  @Bean
+  public DaoAuthenticationProvider authenticationProvider() {
+    DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+    authProvider.setUserDetailsService(userDetailsService);
+    authProvider.setPasswordEncoder(passwordEncoder());
+    return authProvider;
+  }
+
+  @Bean
+  public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+    return authConfig.getAuthenticationManager();
+  }
+
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http
+        .csrf(csrf -> csrf.disable())
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/api/auth/**").permitAll()
+            .requestMatchers("/h2-console/**").permitAll()
+            .requestMatchers("/api/test/public").permitAll()
+            .anyRequest().authenticated()
+        )
+        .authenticationProvider(authenticationProvider())
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+    // For H2 Console
+    http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
+
+    return http.build();
+  }
+}
+</code></pre>
+  </section>
+
+  <section>
+    <h2>JWT Utility</h2>
+    <h3><span class="path">util/JwtUtil.java</span></h3>
+    <pre><code>package com.futoid.spring.usermanagement.util;
+
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
+
+@Component
+public class JwtUtil {
+
+  @Value("${jwt.secret}")
+  private String jwtSecret;
+
+  @Value("${jwt.expiration}")
+  private long jwtExpirationMs;
+
+  private SecretKey getSigningKey() {
+    return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+  }
+
+  public String generateToken(Authentication authentication) {
+    UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+    return generateTokenFromUsername(userDetails.getUsername());
+  }
+
+  public String generateTokenFromUsername(String username) {
+    return Jwts.builder()
+        .subject(username)
+        .issuedAt(new Date())
+        .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
+        .signWith(getSigningKey())
+        .compact();
+  }
+
+  public String getUsernameFromToken(String token) {
+    return Jwts.parser()
+        .verifyWith(getSigningKey())
+        .build()
+        .parseSignedClaims(token)
+        .getPayload()
+        .getSubject();
+  }
+
+  public boolean validateToken(String authToken) {
+    try {
+      Jwts.parser()
+          .verifyWith(getSigningKey())
+          .build()
+          .parseSignedClaims(authToken);
+      return true;
+    } catch (JwtException | IllegalArgumentException e) {
+      System.err.println("JWT validation error: " + e.getMessage());
+    }
+    return false;
+  }
+}
+</code></pre>
+  </section>
+
+  <section>
+    <h2>JWT Authentication Filter</h2>
+    <h3><span class="path">security/JwtAuthenticationFilter.java</span></h3>
+    <pre><code>package com.futoid.spring.usermanagement.security;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.futoid.spring.usermanagement.services.CustomUserDetailsService;
+import com.futoid.spring.usermanagement.util.JwtUtil;
+
+import java.io.IOException;
+
+@Component
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+  @Autowired
+  private JwtUtil jwtUtil;
+
+  @Autowired
+  private CustomUserDetailsService userDetailsService;
+
+  @Override
+  protected void doFilterInternal(HttpServletRequest request,
+                                  HttpServletResponse response,
+                                  FilterChain filterChain) throws ServletException, IOException {
+    try {
+      String jwt = parseJwt(request);
+
+      if (jwt != null && jwtUtil.validateToken(jwt)) {
+        String username = jwtUtil.getUsernameFromToken(jwt);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+        UsernamePasswordAuthenticationToken authentication =
+            new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities());
+
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+      }
+    } catch (Exception e) {
+      logger.error("Cannot set user authentication: {}", e);
+    }
+
+    filterChain.doFilter(request, response);
+  }
+
+  private String parseJwt(HttpServletRequest request) {
+    String headerAuth = request.getHeader("Authorization");
+
+    if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
+      return headerAuth.substring(7);
+    }
+
+    return null;
+  }
+}
+</code></pre>
+  </section>
+
+</body>
+</html>
