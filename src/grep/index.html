@@ -1,0 +1,69 @@
+---
+title: "curl"
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>grep - aliek</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="blog-page">
+    <div class="blog-container">
+      <h1 style="font-size: clamp(2rem, 5vw, 3rem)">
+        Low-effort, high-interest stuff
+      </h1>
+      <a href="/" style="color: #ccc">← Back to home</a>
+
+      {% assign tags = "" | split: "," %} {% for post in collections.blogs %} {%
+      assign tags = tags | push: post.data.topic %} {% endfor %} {% assign
+      unique_tags = tags | uniq %}
+
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-tag="all">All</button>
+        {% for tag in unique_tags %}
+        <button class="filter-btn" data-tag="{{ tag }}">{{ tag }}</button>
+        {% endfor %}
+      </div>
+
+      {% for post in collections.blogs %}
+      <div class="blog-card" data-topic="{{ post.data.topic }}">
+        <h2>
+          <a href="{{ post.url }}" style="color: #fff; text-decoration: none"
+            >{{ post.data.title }}</a
+          >
+        </h2>
+        <div class="blog-meta">
+          <span>By {{ post.data.author }}</span> |
+          <span>{{ post.date | date: "%B %d, %Y" }}</span> |
+          <span class="blog-tag">{{ post.data.topic }}</span>
+        </div>
+        <p>{{ post.data.description }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const filterButtons = document.querySelectorAll(".filter-btn");
+        filterButtons.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            // Remove active class
+            filterButtons.forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+            const tag = btn.dataset.tag;
+            const cards = document.querySelectorAll(".blog-card");
+            cards.forEach((card) => {
+              if (tag === "all" || card.dataset.topic === tag) {
+                card.style.display = "block";
+              } else {
+                card.style.display = "none";
+              }
+            });
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

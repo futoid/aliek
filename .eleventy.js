@@ -8,6 +8,11 @@ export default function (eleventyConfig) {
   eleventyConfig.addWatchTarget("./");
   eleventyConfig.addWatchTarget("./src/");
 
+  // Add blogs collection
+  eleventyConfig.addCollection("blogs", function (collectionApi) {
+    return collectionApi.getFilteredByGlob("src/get/*.md");
+  });
+
   return {
     dir: {
       input: "src", // Templates ONLY from src/
