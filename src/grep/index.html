@@ -2,7 +2,7 @@
 title: "curl"
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -28,7 +28,7 @@ title: "curl"
         {% endfor %}
       </div>
 
-      {% for post in collections.blogs %}
+      {% for post in collections.blogs | sort: 'date' | reverse %}
       <div class="blog-card" data-topic="{{ post.data.topic }}">
         <h2>
           <a href="{{ post.url }}" style="color: #fff; text-decoration: none"
