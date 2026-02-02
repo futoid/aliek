@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>5 Essential Methods of Proof in Discrete Mathematics - aliek</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="blog-page">
+    <div class="blog-container">
+      <a href="/grep" class="back-btn">← Back to Blog</a>
+      <article class="blog-post">
+        <h1>5 Essential Methods of Proof in Discrete Mathematics</h1>
+        <div class="blog-meta">
+          <span>By aliek</span> |
+          <span>February 02, 2026</span> |
+          <span class="blog-tag">discrete math</span>
+        </div>
+        <div class="blog-content">
+          <p>Discrete mathematics underpins logic, sets, graphs, and algorithms. Mastering proofs ensures theorems hold across infinite structures. Here are the five fundamental methods, with precise examples from number theory and logic.</p>
+<h2>1. Direct Proof</h2>
+<p>Start with hypotheses and derive the conclusion using definitions and axioms.</p>
+<p><strong>Theorem</strong>: For integer ( n ), if ( n ) is even, then ( n^2 ) is even.</p>
+<p><strong>Proof</strong>: Let ( n = 2k ) for integer ( k ). Then ( n^2 = (2k)^2 = 4k^2 = 2(2k^2) ), so ( n^2 ) is even.</p>
+<h2>2. Proof by Contraposition</h2>
+<p>To prove ( P \implies Q ), show ( \neg Q \implies \neg P ).</p>
+<p><strong>Theorem</strong>: If ( n^2 ) is even, then ( n ) is even.</p>
+<p><strong>Contrapositive</strong>: If ( n ) is odd, then ( n^2 ) is odd.<br>
+<strong>Proof</strong>: Let ( n = 2k + 1 ). Then ( n^2 = (2k+1)^2 = 4k^2 + 4k + 1 = 2(2k^2 + 2k) + 1 ), which is odd.</p>
+<h2>3. Proof by Contradiction</h2>
+<p>Assume the negation and derive a contradiction.</p>
+<p><strong>Theorem</strong>: ( \sqrt{2} ) is irrational.</p>
+<p><strong>Proof</strong>: Suppose ( \sqrt{2} = \frac{p}{q} ) in lowest terms (( p, q ) integers, ( q \neq 0 )). Then ( p^2 = 2q^2 ), so ( p^2 ) even implies ( p ) even: ( p = 2m ). Substitute: ( 4m^2 = 2q^2 \implies q^2 = 2m^2 ), so ( q ) even. Both even contradicts lowest terms.</p>
+<h2>4. Disproof by Counterexample</h2>
+<p>Refute a universal claim with one violating instance.</p>
+<p><strong>Claim</strong>: Every prime is odd.<br>
+<strong>Counterexample</strong>: 2 is prime and even.</p>
+<h2>5. Proof by Mathematical Induction</h2>
+<p>Prove for all ( n \geq n_0 ): base case + inductive step.</p>
+<p><strong>Theorem</strong>: ( 1 + 2 + \dots + n = \frac{n(n+1)}{2} ) for ( n \geq 1 ).</p>
+<p><strong>Proof</strong>:</p>
+<ul>
+<li><strong>Base Case</strong> (( n=1 )): Left: 1; right: ( \frac{1 \cdot 2}{2} = 1 ).</li>
+<li><strong>Inductive Step</strong>: Assume true for ( k ): ( \sum*{i=1}^k i = \frac{k(k+1)}{2} ). For ( k+1 ):<br>
+( \sum*{i=1}^{k+1} i = \frac{k(k+1)}{2} + (k+1) = \frac{k(k+1) + 2(k+1)}{2} = \frac{(k+1)(k+2)}{2} ).</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Proves</th>
+<th>Common In</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Direct</td>
+<td>Implications</td>
+<td>Parity, divisibility</td>
+</tr>
+<tr>
+<td>Contraposition</td>
+<td>Conditionals</td>
+<td>Number theory</td>
+</tr>
+<tr>
+<td>Contradiction</td>
+<td>Irrationals, uniqueness</td>
+<td>Logic, sets</td>
+</tr>
+<tr>
+<td>Counterexample</td>
+<td>Disproves universals</td>
+<td>Testing claims</td>
+</tr>
+<tr>
+<td>Induction</td>
+<td>Infinite sequences</td>
+<td>Combinatorics, recurrences</td>
+</tr>
+</tbody>
+</table>
+<h2>Key Takeaways</h2>
+<p>Direct and contraposition build chains; contradiction exposes impossibilities; counterexamples prune falsehoods; induction scales to infinity. Practice on graph theory or pigeonhole principle next.</p>
+<hr>
+
+        </div>
+      </article>
+    </div>
+  </body>
+</html>
