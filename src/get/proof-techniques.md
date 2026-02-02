@@ -1,6 +1,6 @@
 ---
 title: "5 Essential Methods of Proof in Discrete Mathematics"
-description: "Direct proof, contraposition, contradiction, counterexample, and induction—core techniques for rigorously establishing theorems in sets, logic, and combinatorics."
+description: "Direct, contraposition, contradiction, counterexample, induction—essential for theorems in sets, logic, and combinatorics."
 author: "aliek"
 date: 2026-02-02
 topic: "math"
