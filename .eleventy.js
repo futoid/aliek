@@ -10,7 +10,9 @@ export default function (eleventyConfig) {
 
   // Add blogs collection
   eleventyConfig.addCollection("blogs", function (collectionApi) {
-    return collectionApi.getFilteredByGlob("src/get/*.md");
+    return collectionApi
+      .getFilteredByGlob("src/get/*.md")
+      .sort((a, b) => new Date(b.data.date) - new Date(a.data.date));
   });
 
   return {
