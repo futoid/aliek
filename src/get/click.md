@@ -1,5 +1,5 @@
 ---
-title: "ISO | Shutter Speed | Apperture"
+title: "ISO | Shutter Speed | Aperture"
 description: "Priotize the exporsure trinity"
 author: "aliek"
 date: 2026-02-08
