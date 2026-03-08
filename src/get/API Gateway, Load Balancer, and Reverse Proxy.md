@@ -9,9 +9,7 @@ layout: blog
 
 API Gateway, Load Balancer, and Reverse Proxy often get mixed up because they all forward requests between clients and servers, but each solves distinct problems in modern architectures. This post distills key concepts, examples, and a practical decision guide for your stack—perfect for your Spring Boot + Docker microservices setup.
 
-Reference: [https://www.youtube.com/watch?v=DVR0zvDYJgY](https://www.youtube.com/watch?v=DVR0zvDYJgY)
-
-![Architecture Overview](../assets/test.png)
+![Architecture Overview](https://raw.githubusercontent.com/futoid/aliek/refs/heads/blog/src/assets/API%20Gateway%2C%20Load%20Balancer%2C%20and%20Reverse%20Proxy.png)
 
 ## Reverse Proxy: The Foundation
 
@@ -66,5 +64,7 @@ Layers complement: CDN absorbs spikes, gateway secures your JWT endpoints, LB sc
 - Often: Gateway → LB → Reverse proxy per Spring Boot service.
 
 This spectrum clarifies: reverse proxy (base) → +distribution (LB) → +API features (gateway).
+
+Reference: [YT video](https://youtu.be/DVR0zvDYJgY?si=ITUFDE1HFYfht9Az)
 
 ---
