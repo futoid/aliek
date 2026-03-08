@@ -3,6 +3,7 @@ export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy("index.html");
   eleventyConfig.addPassthroughCopy("styles.css");
   eleventyConfig.addPassthroughCopy("favicon.ico");
+  eleventyConfig.addPassthroughCopy("src/assets");
 
   // Watch both locations
   eleventyConfig.addWatchTarget("./");
