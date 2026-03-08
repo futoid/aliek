@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>API Gateway, Load Balancer, and Reverse Proxy - aliek</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="blog-page">
+    <div class="blog-container">
+      <a href="/grep" class="back-btn">← Back to Blog</a>
+      <article class="blog-post">
+        <h1>API Gateway, Load Balancer, and Reverse Proxy</h1>
+        <div class="blog-meta">
+          <span>By aliek</span> |
+          <span>March 08, 2026</span> |
+          <span class="blog-tag">devops</span>
+        </div>
+        <div class="blog-content">
+          <p>API Gateway, Load Balancer, and Reverse Proxy often get mixed up because they all forward requests between clients and servers, but each solves distinct problems in modern architectures. This post distills key concepts, examples, and a practical decision guide for your stack—perfect for your Spring Boot + Docker microservices setup.</p>
+<p>Reference: <a href="https://www.youtube.com/watch?v=DVR0zvDYJgY">https://www.youtube.com/watch?v=DVR0zvDYJgY</a></p>
+<h2>Reverse Proxy: The Foundation</h2>
+<p>A reverse proxy sits in front of servers, handling incoming requests and forwarding them to backends while hiding server details.</p>
+<ul>
+<li><strong>Core Features</strong>: SSL termination (offloads CPU-intensive HTTPS), caching (serves repeated responses fast), security (exposes only proxy IP), compression (GZIP responses).</li>
+<li><strong>Tools</strong>: Nginx, HAProxy, Caddy, Apache.</li>
+<li><strong>Use Case</strong>: Any web/API traffic needing basic forwarding and optimization—your app's first line of defense.</li>
+</ul>
+<p>Unlike forward proxies (client-side for filtering/anonymity), reverse proxies protect and optimize servers.</p>
+<h2>Load Balancer: Traffic Distribution</h2>
+<p>A load balancer is a specialized reverse proxy focused on scaling across multiple backend servers.</p>
+<ul>
+<li><strong>Algorithms</strong>: Round-robin (equal turns), least connections (busier servers get breaks), IP hash (sticky sessions), weighted (uneven capacities).</li>
+<li><strong>Layer 4 vs 7</strong>: L4 (TCP/IP, fast), L7 (HTTP-aware routing by path/headers).</li>
+<li><strong>Tools</strong>: AWS ALB/NLB, GCP Load Balancer, Nginx/HAProxy in LB mode.</li>
+<li><strong>Benefits</strong>: Scalability (add servers), high availability (failover on health checks).</li>
+</ul>
+<p>Ideal when one Spring Boot service can't handle load—distributes for reliability.</p>
+<h2>API Gateway: API Management</h2>
+<p>An API gateway manages APIs with cross-cutting concerns like security and monitoring, beyond just forwarding.</p>
+<ul>
+<li><strong>Key Features</strong>: Auth/OAuth validation, rate limiting (e.g., 100 req/min free tier), transformations (JSON to XML), versioning (v1/v2 routing), analytics (P95 latency, error rates).</li>
+<li><strong>Tools</strong>: Kong (Nginx-based), AWS API Gateway, Apigee, Azure APIM, Tyk.</li>
+<li><strong>Microservices Fit</strong>: Centralizes JWT auth/logging—your ride-sharing services focus on business logic.</li>
+</ul>
+<p>Essential for public APIs with external clients and tiers.</p>
+<h2>The Overlap and Real Architectures</h2>
+<p>Tools blur lines: Nginx does reverse proxy + basic LB/rate limiting; Kong builds API gateway on Nginx.</p>
+<p><strong>Typical Microservices Stack</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Tool Example</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Edge/CDN</td>
+<td>CloudFront/Cloudflare</td>
+<td>Global caching, SSL near users</td>
+</tr>
+<tr>
+<td>API Mgmt</td>
+<td>AWS API Gateway/Kong</td>
+<td>JWT auth, rate limits, ride-sharing routing</td>
+</tr>
+<tr>
+<td>Distribution</td>
+<td>AWS ALB</td>
+<td>Scale per PostgreSQL-backed service</td>
+</tr>
+<tr>
+<td>Service</td>
+<td>Nginx</td>
+<td>Internal SSL/static files per Docker container</td>
+</tr>
+</tbody>
+</table>
+<p>Layers complement: CDN absorbs spikes, gateway secures your JWT endpoints, LB scales.</p>
+<h2>Decision Framework</h2>
+<ul>
+<li>Need scale/HA for ride-sharing? Add load balancer.</li>
+<li>Public APIs + JWT tiers? API gateway first.</li>
+<li>Just SSL/caching for dev? Reverse proxy suffices.</li>
+<li>Often: Gateway → LB → Reverse proxy per Spring Boot service.</li>
+</ul>
+<p>This spectrum clarifies: reverse proxy (base) → +distribution (LB) → +API features (gateway).</p>
+<hr>
+
+        </div>
+      </article>
+    </div>
+  </body>
+</html>
