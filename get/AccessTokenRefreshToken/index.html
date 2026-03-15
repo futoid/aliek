@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Access Tokens & Refresh Tokens: A Production Security Guide - aliek</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="blog-page">
+    <div class="blog-container">
+      <a href="/grep" class="back-btn">← Back to Blog</a>
+      <article class="blog-post">
+        <h1>Access Tokens & Refresh Tokens: A Production Security Guide</h1>
+        <div class="blog-meta">
+          <span>By aliek</span> |
+          <span>March 15, 2026</span> |
+          <span class="blog-tag">dev</span>
+        </div>
+        <div class="blog-content">
+          <p>Authentication is one of the most critical—and most misunderstood—parts of any production system. Get it wrong, and a stolen credential can silently compromise user accounts for weeks. Get it right, and even a leaked token becomes nearly useless to an attacker within minutes.</p>
+<p>The two-token pattern—access tokens paired with refresh tokens—is the industry standard for stateless, revocable, secure authentication. This post explains exactly how it works, why each design decision matters, and the concrete rules you need to follow in production.</p>
+<hr>
+<h2>The core problem with a single token</h2>
+<p>The naive approach is to issue one long-lived token on login and send it with every request. Simple. But consider the attack surface:</p>
+<ul>
+<li><strong>Every API request exposes the token.</strong> It travels over the wire, sits in headers, and sometimes ends up in logs.</li>
+<li><strong>Once compromised, it stays compromised.</strong> If an attacker steals a 30-day token on day one, they have 29 days of free access.</li>
+<li><strong>Revocation is hard.</strong> Stateless tokens (like JWTs) can't be &quot;un-issued.&quot; You'd need a server-side blocklist—which defeats much of the purpose of stateless auth.</li>
+</ul>
+<p>The two-token system solves all three of these problems by splitting the credential into two pieces with different lifetimes, storage locations, and exposure surfaces.</p>
+<hr>
+<h2>What is an access token?</h2>
+<p>An access token is a <strong>short-lived credential</strong> sent with every API request to prove the caller is authorized.</p>
+<ul>
+<li><strong>Lifetime:</strong> 5 to 60 minutes (15 minutes is a common production default)</li>
+<li><strong>Format:</strong> Usually a signed JWT (JSON Web Token)</li>
+<li><strong>Where it lives:</strong> In memory, or as an <code>Authorization: Bearer &lt;token&gt;</code> header on requests</li>
+<li><strong>What it contains:</strong> User ID, roles/permissions, expiry timestamp—all cryptographically signed</li>
+</ul>
+<p>Because it's sent with every request, it has the highest exposure of the two tokens. The short lifetime is its defense: even if an attacker intercepts it, it expires before they can do much with it.</p>
+<h3>What a decoded JWT access token looks like</h3>
+<pre><code class="language-json">{
+  &quot;sub&quot;: &quot;user_8f2k39&quot;,
+  &quot;email&quot;: &quot;futoid@aliek.com&quot;,
+  &quot;roles&quot;: [&quot;user&quot;],
+  &quot;iat&quot;: 1742000000,
+  &quot;exp&quot;: 1742000900
+}
+</code></pre>
+<p>The <code>exp</code> field is the expiry—900 seconds (15 minutes) after issue. The signature covering this payload is what makes it tamper-proof.</p>
+<hr>
+<h2>What is a refresh token?</h2>
+<p>A refresh token is a <strong>long-lived credential</strong> used for exactly one purpose: obtaining a new access token when the current one expires. It never touches your API directly.</p>
+<ul>
+<li><strong>Lifetime:</strong> Days to weeks (7–30 days is typical)</li>
+<li><strong>Format:</strong> An opaque string (not a JWT)—it's just a secure random identifier</li>
+<li><strong>Where it lives:</strong> Stored server-side (in a database) and client-side in a secure, httpOnly cookie</li>
+<li><strong>What it does:</strong> Sent to the auth server's <code>/refresh</code> endpoint to get a fresh access token</li>
+</ul>
+<p>The refresh token's power comes from its storage. Because it lives in an <code>httpOnly</code> cookie, JavaScript running in the browser—including any injected XSS payload—cannot read it. It's invisible to the code layer that handles your API calls.</p>
+<hr>
+<h2>How they work together</h2>
+<p>Here's the complete lifecycle:</p>
+<pre><code>1. User logs in with credentials
+   → Auth server issues: access token + refresh token
+
+2. Client stores:
+   → Access token: in memory (JS variable or React state)
+   → Refresh token: in httpOnly, Secure, SameSite=Strict cookie
+
+3. API call
+   → Client sends: Authorization: Bearer &lt;access_token&gt;
+   → Server validates signature + checks expiry
+   → Returns: data
+
+4. Access token expires (after 15 min)
+   → Client silently calls: POST /auth/refresh
+   → Browser automatically sends httpOnly cookie with request
+   → Auth server validates refresh token, issues new access token
+   → Client swaps the old access token in memory for the new one
+   → API calls resume transparently
+
+5. User logs out (or suspicious activity detected)
+   → Auth server marks refresh token as revoked in database
+   → All future refresh requests fail
+   → Active sessions expire within 15 minutes at most
+</code></pre>
+<p>The user never sees steps 4 and 5 happening. From their perspective, they just stay logged in—or they get logged out immediately if something goes wrong.</p>
+<hr>
+<h2>Why this is more secure</h2>
+<h3>Short exposure window</h3>
+<p>If an access token is stolen—through a log leak, a misconfigured proxy, or a compromised third-party script—the attacker has at most 15 minutes of access. The refresh token, stored in an httpOnly cookie, was never accessible to the attacker in the first place.</p>
+<h3>Instant revocation</h3>
+<p>Because refresh tokens are stored in your database, you can revoke any session immediately:</p>
+<ul>
+<li>User changes their password → revoke all refresh tokens</li>
+<li>Admin flags suspicious activity → revoke that user's tokens</li>
+<li>User logs out → revoke that specific token</li>
+</ul>
+<p>Without this, the best you can do with a stateless access token is wait for it to expire.</p>
+<h3>Defense against XSS</h3>
+<p>XSS (cross-site scripting) attacks can steal anything JavaScript can read. Access tokens in <code>localStorage</code> are wide open. Refresh tokens in httpOnly cookies are completely invisible to JavaScript. Even a fully compromised XSS payload cannot extract the refresh token.</p>
+<hr>
+<h2>Refresh token rotation</h2>
+<p>Static refresh tokens (ones that never change) are a liability. If one is ever leaked, the attacker has it indefinitely.</p>
+<p><strong>Refresh token rotation</strong> solves this: every time the client exchanges a refresh token for a new access token, the auth server also issues a brand new refresh token and invalidates the old one.</p>
+<pre><code>Client sends: refresh_token_A
+Server responds: new_access_token + refresh_token_B (token_A is now invalid)
+</code></pre>
+<p>Additionally, implement <strong>reuse detection</strong>: if <code>refresh_token_A</code> is presented after it has already been exchanged, something is wrong—either a replay attack or a compromised token. The correct response is to revoke the entire token family (all sessions for that user) and force a re-login.</p>
+<hr>
+<h2>Production implementation checklist</h2>
+<h3>Token issuance</h3>
+<pre><code class="language-javascript">// On successful login
+const accessToken = jwt.sign(
+  { sub: user.id, roles: user.roles },
+  process.env.JWT_SECRET,
+  { expiresIn: &quot;15m&quot; },
+);
+
+const refreshToken = crypto.randomBytes(64).toString(&quot;hex&quot;);
+
+// Store refresh token hash in database (never the raw token)
+await db.refreshTokens.create({
+  tokenHash: await bcrypt.hash(refreshToken, 10),
+  userId: user.id,
+  expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+  family: generateTokenFamily(), // for reuse detection
+});
+
+// Send refresh token as httpOnly cookie
+res.cookie(&quot;refresh_token&quot;, refreshToken, {
+  httpOnly: true, // not accessible to JavaScript
+  secure: true, // HTTPS only
+  sameSite: &quot;strict&quot;, // no cross-site requests
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  path: &quot;/auth/refresh&quot;, // cookie only sent to this endpoint
+});
+
+// Send access token in response body
+res.json({ accessToken });
+</code></pre>
+<h3>Token refresh endpoint</h3>
+<pre><code class="language-javascript">app.post(&quot;/auth/refresh&quot;, async (req, res) =&gt; {
+  const rawToken = req.cookies.refresh_token;
+  if (!rawToken) return res.status(401).json({ error: &quot;No refresh token&quot; });
+
+  // Find matching token record
+  const records = await db.refreshTokens.findByFamily(/* ... */);
+  const record = await findMatchingRecord(rawToken, records);
+
+  if (!record) {
+    // Reuse detected: revoke entire family
+    await db.refreshTokens.revokeFamily(req.cookies.family_id);
+    return res.status(401).json({ error: &quot;Token reuse detected&quot; });
+  }
+
+  if (record.expiresAt &lt; new Date()) {
+    return res.status(401).json({ error: &quot;Refresh token expired&quot; });
+  }
+
+  // Rotate: invalidate old token, issue new one
+  await db.refreshTokens.revoke(record.id);
+
+  const newRefreshToken = crypto.randomBytes(64).toString(&quot;hex&quot;);
+  await db.refreshTokens.create({
+    /* ... */
+  });
+
+  const newAccessToken = jwt.sign(
+    { sub: record.userId },
+    process.env.JWT_SECRET,
+    { expiresIn: &quot;15m&quot; },
+  );
+
+  res.cookie(&quot;refresh_token&quot;, newRefreshToken, {
+    /* same options */
+  });
+  res.json({ accessToken: newAccessToken });
+});
+</code></pre>
+<h3>Client-side token handling</h3>
+<pre><code class="language-javascript">// Store access token in memory only — never localStorage
+let accessToken = null;
+
+// Axios interceptor: attach token to every request
+axios.interceptors.request.use((config) =&gt; {
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+  return config;
+});
+
+// Axios interceptor: silently refresh on 401
+axios.interceptors.response.use(
+  (response) =&gt; response,
+  async (error) =&gt; {
+    if (error.response?.status === 401 &amp;&amp; !error.config._retry) {
+      error.config._retry = true;
+      const { data } = await axios.post(&quot;/auth/refresh&quot;);
+      accessToken = data.accessToken; // update in-memory token
+      error.config.headers.Authorization = `Bearer ${accessToken}`;
+      return axios(error.config); // retry original request
+    }
+    return Promise.reject(error);
+  },
+);
+</code></pre>
+<hr>
+<h2>What not to do</h2>
+<p><strong>Never store access tokens in <code>localStorage</code> or <code>sessionStorage</code>.</strong> Both are readable by any JavaScript on the page, including injected scripts.</p>
+<p><strong>Never store refresh tokens in <code>localStorage</code>.</strong> Same reason, with higher stakes given the longer lifetime.</p>
+<p><strong>Never put sensitive data in the JWT payload.</strong> JWTs are base64-encoded, not encrypted. Anyone who intercepts one can decode the payload. Keep it to user ID and roles only.</p>
+<p><strong>Never log full tokens.</strong> Logs are often stored, replicated, and accessed by more people than your application. Log token IDs or hashes, not the tokens themselves.</p>
+<p><strong>Never skip HTTPS.</strong> Every security property described here assumes transport-layer encryption. On plain HTTP, all of it falls apart.</p>
+<p><strong>Don't set refresh token lifetimes too long.</strong> 7 days is a reasonable default. 90-day refresh tokens are common but require especially robust rotation and revocation logic.</p>
+<hr>
+<h2>A quick comparison</h2>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Access Token</th>
+<th>Refresh Token</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lifetime</td>
+<td>5–60 minutes</td>
+<td>Days to weeks</td>
+</tr>
+<tr>
+<td>Sent with</td>
+<td>Every API request</td>
+<td>Only <code>/auth/refresh</code></td>
+</tr>
+<tr>
+<td>Storage (client)</td>
+<td>In memory</td>
+<td>httpOnly cookie</td>
+</tr>
+<tr>
+<td>Storage (server)</td>
+<td>Not stored</td>
+<td>Hashed in database</td>
+</tr>
+<tr>
+<td>Readable by JS</td>
+<td>Yes (from memory)</td>
+<td>No (httpOnly)</td>
+</tr>
+<tr>
+<td>Can be revoked</td>
+<td>No (waits to expire)</td>
+<td>Yes, immediately</td>
+</tr>
+<tr>
+<td>Format</td>
+<td>Signed JWT</td>
+<td>Opaque random string</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>Summary</h2>
+<p>The access token / refresh token split is not unnecessary complexity—it's the minimum viable security model for any production system handling authenticated users.</p>
+<p>Short-lived access tokens limit damage from exposure. Long-lived refresh tokens in httpOnly cookies let users stay logged in without the risk of a persistent stolen credential. Rotation and reuse detection turn any compromised token into an alarm rather than a free pass.</p>
+<p>Follow the storage rules strictly (memory for access tokens, httpOnly cookie for refresh tokens), implement rotation on every refresh, and wire up revocation for logout and password changes. That's the foundation everything else builds on.</p>
+
+        </div>
+      </article>
+    </div>
+  </body>
+</html>
