@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OSI Model - aliek</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="blog-page">
+    <div class="blog-container">
+      <a href="/grep" class="back-btn">← Back to Blog</a>
+      <article class="blog-post">
+        <h1>OSI Model</h1>
+        <div class="blog-meta">
+          <span>By aliek</span> |
+          <span>March 27, 2026</span> |
+          <span class="blog-tag">devops</span>
+        </div>
+        <div class="blog-content">
+          <p>The OSI model often gets dismissed as textbook theory, but I’ve found it to be one of the most useful mental models for understanding networks. Once I walked through a real request from one machine to another—step by step—each layer suddenly made sense.</p>
+<p>In this post, I’ll go through all seven layers using a simple exeampl: sending an HTTP request from my machi neto a server. I’ll start at the top (where we usually write code) and drill all the way down to bits on the wire.</p>
+<hr>
+<h2>Why I Still Care About the OSI Model</h2>
+<p>Most of the tools I use daily—reverse proxies, load balancers, TLS, HTTP, databases—sit on top of the same networking stack. Without a mental model like OSI, a lot of that feels like black magic.</p>
+<p>The OSI model gives me:</p>
+<ul>
+<li>A vocabulary to describe <em>where</em> a problem lives (L2 vs L7).</li>
+<li>A way to map tools and protocols to specific layers.</li>
+<li>A structured way to reason about performance and failures.</li>
+</ul>
+<p>Think of it as a layered debugger for the network.</p>
+<hr>
+<h2>Layer 7 – Application: Where My Code Lives</h2>
+<p>I start at the top because this is where I usually work.</p>
+<p>At the application layer, I’m building things like:</p>
+<ul>
+<li>An HTTP <code>GET /</code> or <code>POST /login</code> request.</li>
+<li>Headers, cookies, and body (JSON, HTML, etc.).</li>
+<li>A target host and port (for example, IP of the server on port 443).</li>
+</ul>
+<p>Here, the data is just a well‑formed HTTP message. I don’t care yet how it becomes bytes or how it travels; I just know <em>what</em> I want to send.</p>
+<hr>
+<h2>Layer 6 – Presentation: Making Data Transmittable</h2>
+<p>Before this data can be pushed down the stack, it needs to be turned into a consistent representation.</p>
+<p>Typical work at the presentation layer:</p>
+<ul>
+<li><strong>Serialization</strong>: converting in‑memory objects into strings or byte sequences (for example, JSON serialization).</li>
+<li><strong>Compression</strong>: shrinking payloads so they travel faster.</li>
+<li><strong>Encryption/Decryption</strong>: turning plaintext into ciphertext and back (TLS commonly gets associated here).</li>
+</ul>
+<p>In practice, I usually don’t think “I’m now at layer 6”; my frameworks just handle JSON encoding, TLS, and compression for me. But conceptually, this is the layer that prepares data for the journey.</p>
+<hr>
+<h2>Layer 5 – Session: Managing Conversations</h2>
+<p>The session layer is about managing ongoing conversations between endpoints.</p>
+<p>Conceptually, it can:</p>
+<ul>
+<li>Establish, maintain, and tear down sessions.</li>
+<li>Track which messages belong to which logical “conversation”.</li>
+</ul>
+<p>In modern stacks, a lot of this either lives lower (in TCP) or higher (in application sessions like cookies or tokens), so layers 5 and 6 often feel “blurred”. Still, it’s useful to remember that there’s a conceptual layer responsible for the idea of a <em>session</em>.</p>
+<hr>
+<h2>Layer 4 – Transport: Ports and Reliability</h2>
+<p>Layer 4 is where things get very concrete again.</p>
+<p>Here I have protocols like:</p>
+<ul>
+<li><strong>TCP</strong>: reliable, connection‑oriented.</li>
+<li><strong>UDP</strong>: connectionless, no guarantees.</li>
+</ul>
+<p>For TCP, this layer provides:</p>
+<ul>
+<li><strong>Ports</strong>: source and destination ports to deliver data to the right process (80, 443, 5432, etc.).</li>
+<li><strong>Reliability</strong>: sequence numbers, acknowledgments, retransmissions, in‑order delivery.</li>
+<li><strong>Segmentation</strong>: breaking the data into manageable <strong>segments</strong>.</li>
+</ul>
+<p>My HTTP request from layer 7 (already serialized and maybe encrypted/compressed) reaches layer 4, where TCP wraps it with headers: source port, destination port, sequence numbers, flags, and so on. At this point, I have a <strong>TCP segment</strong>.</p>
+<hr>
+<h2>Layer 3 – Network: IP and Routing</h2>
+<p>Layer 3 introduces logical addressing and routing through IP.</p>
+<p>Responsibilities here:</p>
+<ul>
+<li>Assign <strong>source IP</strong> and <strong>destination IP</strong>.</li>
+<li>Decide how to move packets across networks using routing tables.</li>
+<li>Allow traffic to cross multiple hops (routers) to reach a remote network.</li>
+</ul>
+<p>Once layer 3 adds its header to the TCP segment, I get an <strong>IP packet</strong>.</p>
+<p>Routers mostly live at this layer: they look at the destination IP, consult their routing tables, and forward packets accordingly, without needing to understand the full payload.</p>
+<hr>
+<h2>Layer 2 – Data Link: Frames and MAC Addresses</h2>
+<p>Before the packet can be turned into raw bits, it needs to be prepared for the local network segment.</p>
+<p>Layer 2 provides:</p>
+<ul>
+<li><strong>MAC addresses</strong>: unique identifiers for network interfaces on a local network.</li>
+<li><strong>Frames</strong>: units that include destination MAC, source MAC, and the encapsulated IP packet.</li>
+<li><strong>Local delivery</strong>: deciding how to move data within a single LAN.</li>
+</ul>
+<p>A few key ideas I keep in mind:</p>
+<ul>
+<li>MAC addresses are only meaningful on the local segment.</li>
+<li>If the destination IP is outside my subnet, the frame is actually sent to the <strong>default gateway’s MAC address</strong>, not directly to the final server’s MAC.</li>
+<li>Protocols like ARP map IP addresses to MAC addresses on the LAN.</li>
+</ul>
+<p>Switches work entirely at this layer: they look at MAC addresses, maintain MAC tables, and forward frames accordingly.</p>
+<hr>
+<h2>Layer 1 – Physical: Bits on a Medium</h2>
+<p>Finally, at the bottom, everything becomes raw bits.</p>
+<p>Layer 1 is about:</p>
+<ul>
+<li><strong>Medium</strong>: copper (electrical signals), radio (Wi‑Fi, Bluetooth), or fiber (light).</li>
+<li><strong>Encoding</strong>: how 0s and 1s are represented as voltages, frequencies, or light pulses.</li>
+<li><strong>Transmission</strong>: pushing those encoded bits across the physical link.</li>
+</ul>
+<p>At this level, there is no notion of IP, ports, or HTTP. It’s just carefully timed changes in a physical signal that, when interpreted correctly, reconstruct frames, packets, segments, and finally the original HTTP request.</p>
+<hr>
+<h2>Encapsulation: The Full Journey Down and Up</h2>
+<p>Walking through the full encapsulation from my machine to the server:</p>
+<ol>
+<li><strong>Application (L7)</strong>: I create an HTTP request.</li>
+<li><strong>Presentation (L6)</strong>: It’s serialized (and maybe encrypted/compressed).</li>
+<li><strong>Session (L5)</strong>: The conversation is conceptually part of a session.</li>
+<li><strong>Transport (L4)</strong>: TCP adds ports and reliability → <strong>segment</strong>.</li>
+<li><strong>Network (L3)</strong>: IP adds logical addresses → <strong>packet</strong>.</li>
+<li><strong>Data Link (L2)</strong>: MAC addresses and frame header/trailer → <strong>frame</strong>.</li>
+<li><strong>Physical (L1)</strong>: The frame becomes bits on a medium.</li>
+</ol>
+<p>On the receiving side, everything happens in reverse:</p>
+<ul>
+<li>The device reads bits and reconstructs frames (L1 → L2).</li>
+<li>Frames are checked and stripped to reveal packets (L2 → L3).</li>
+<li>Packets are routed to the correct transport endpoint (L3 → L4).</li>
+<li>TCP reassembles the stream, verifies order and integrity (L4).</li>
+<li>The application‑level payload is decrypted, decompressed, and parsed (L5–L7).</li>
+<li>Finally, the server sees a clean HTTP request.</li>
+</ul>
+<p>Each device along the path only looks as high as it needs:</p>
+<ul>
+<li>A switch: up to L2 (MAC).</li>
+<li>A router: up to L3 (IP), sometimes L4 for things like NAT and basic firewall rules.</li>
+<li>Application proxies: up to L7, fully understanding HTTP.</li>
+</ul>
+<hr>
+<h2>OSI vs TCP/IP and Why I Still Use OSI</h2>
+<p>In practice, a lot of people prefer the simpler TCP/IP model with fewer layers, because:</p>
+<ul>
+<li>Presentation (L6) and session (L5) are rarely explicit in implementations.</li>
+<li>Their responsibilities are often split between application logic and TCP.</li>
+</ul>
+<p>Even so, I still find the OSI model helpful as a conceptual map. When something breaks, I can ask:</p>
+<ul>
+<li>Is this a <strong>physical</strong> issue (cable, Wi‑Fi, interface)?</li>
+<li>Is this a <strong>link</strong> issue (MAC, VLAN, switch)?</li>
+<li>Is this a <strong>network</strong> issue (IP, routing, subnets)?</li>
+<li>Is this a <strong>transport</strong> issue (ports, TCP state, congestion)?</li>
+<li>Or is this purely an <strong>application</strong> problem (HTTP, JSON, business logic)?</li>
+</ul>
+<p>That layered way of thinking has made debugging and designing networked systems a lot more systematic for me.</p>
+<hr>
+
+        </div>
+      </article>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TCP vs UDP: A Practical Crash Course - aliek</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="blog-page">
+    <div class="blog-container">
+      <a href="/grep" class="back-btn">← Back to Blog</a>
+      <article class="blog-post">
+        <h1>TCP vs UDP: A Practical Crash Course</h1>
+        <div class="blog-meta">
+          <span>By aliek</span> |
+          <span>March 27, 2026</span> |
+          <span class="blog-tag">devops</span>
+        </div>
+        <div class="blog-content">
+          <p>TCP and UDP are both transport‑layer protocols that let machines send and receive data over a network. We have both for a reason: each one makes different trade‑offs between reliability, overhead, speed, and statefulness.</p>
+<p>In this post I’m summarizing the key ideas, pros/cons, and simple demos that made the differences.</p>
+<h2>Where TCP and UDP Live in the Stack</h2>
+<p>Both TCP and UDP sit at <strong>Layer 4 – Transport</strong> in the OSI model.</p>
+<p>At this layer I care about two main things:</p>
+<ul>
+<li><strong>IP address</strong>: which machine to talk to.</li>
+<li><strong>Port</strong>: which application on that machine (80, 443, 5432, etc.).</li>
+</ul>
+<p>Together, IP + port identify a specific endpoint process.</p>
+<hr>
+<h2>TCP: Transmission Control Protocol</h2>
+<p>TCP is a <strong>reliable, connection‑oriented, stateful</strong> transport protocol.</p>
+<h3>What TCP Gives Me (Pros)</h3>
+<ol>
+<li>
+<p><strong>Acknowledgment (ACKs)</strong><br>
+Every piece of data (segment) has sequence information, and the receiver sends back ACKs to confirm delivery. If the sender doesn’t get an ACK, it assumes loss.</p>
+</li>
+<li>
+<p><strong>Guaranteed delivery &amp; retransmission</strong><br>
+If a segment is lost or corrupted, TCP retransmits until it either succeeds or gives up after timeouts.</p>
+</li>
+<li>
+<p><strong>Connection‑based (stateful)</strong><br>
+A TCP connection is established with a handshake and then maintained as <strong>state</strong> on both client and server. Each side tracks things like sequence numbers, window sizes, and connection status.</p>
+</li>
+<li>
+<p><strong>Congestion control</strong><br>
+TCP regulates how fast it sends data based on network conditions, like traffic lights controlling cars entering a highway. This prevents overwhelming routers and links.</p>
+</li>
+<li>
+<p><strong>Ordered packets</strong><br>
+Segments may arrive out of order, but TCP reorders them before delivering bytes to the application. The app sees a clean, in‑order byte stream.</p>
+</li>
+</ol>
+<p>Because of all this, TCP is the default choice for protocols where correctness, ordering, and reliability are more important than raw speed (HTTP, databases, SSH, etc.).</p>
+<h3>What TCP Costs Me (Cons)</h3>
+<p>The same features come with downsides:</p>
+<ul>
+<li><strong>Larger packets</strong>: More header fields (sequence numbers, ACKs, flags) mean more bytes per message.</li>
+<li><strong>More bandwidth</strong>: Extra metadata + retransmissions increase network usage.</li>
+<li><strong>Slower</strong>: Waiting for ACKs, reordering, congestion control, and retransmission adds latency.</li>
+<li><strong>Stateful on server</strong>: Each connection consumes memory and resources; many half‑open or malicious connections can lead to DoS.</li>
+</ul>
+<p>If I restart a TCP server mid‑connection, the connection is gone. The client can’t just continue; it must reconnect because the state was held on the server and lost.</p>
+<hr>
+<h2>TCP Demo: Simple Server Idea</h2>
+<p>A simple demo that illustrates TCP:</p>
+<ul>
+<li>Run a server that listens on <code>127.0.0.1:8080</code>.</li>
+<li>When a client connects (e.g., via <code>telnet</code>), the server sends <code>&quot;Hello&quot;</code>.</li>
+<li>Whenever the client types something, the server logs the raw bytes and text.</li>
+</ul>
+<p>If the server process is killed while a client is connected, the client sees that the connection is closed and any in‑flight data is lost. That’s the practical face of TCP’s statefulness.</p>
+<hr>
+<h2>UDP: User Datagram Protocol</h2>
+<p>UDP is a <strong>connectionless, stateless, “best effort”</strong> protocol.</p>
+<h3>What UDP Removes (Compared to TCP)</h3>
+<p>UDP <strong>does not provide</strong>:</p>
+<ul>
+<li><strong>Acknowledgments</strong>: No built‑in “I received this” messages.</li>
+<li><strong>Guaranteed delivery</strong>: No retransmission; if a packet is lost, it’s just gone.</li>
+<li><strong>Congestion control</strong>: It happily sends packets without caring about network load.</li>
+<li><strong>Ordering</strong>: Packets may arrive out of order, and UDP doesn’t fix this.</li>
+<li><strong>Connection state</strong>: There is no notion of a persistent connection at the protocol level.</li>
+</ul>
+<p>This makes UDP inherently less “safe” if I care about every byte and strict order. Some firewalls even block UDP because there’s no handshake that can be used for basic trust.</p>
+<h3>What UDP Buys Me (Pros)</h3>
+<p>Precisely because it drops those features, UDP gives:</p>
+<ul>
+<li><strong>Smaller headers</strong> → smaller packets → less bandwidth.</li>
+<li><strong>Lower latency</strong> → no waiting for ACKs, ordering, or congestion windows.</li>
+<li><strong>Statelessness</strong> → servers don’t keep per‑client connection state; easy to horizontally scale.</li>
+</ul>
+<p>For low‑bandwidth, intermittent networks (e.g., mobile games over weak connections), this can be a huge win. Applications can build only the reliability they truly need at a higher layer (“reliable UDP”).</p>
+<hr>
+<h2>UDP Demo: Simple Server Idea</h2>
+<p>A minimal UDP demo:</p>
+<ul>
+<li>Create a UDP socket bound to port <code>8081</code> (IPv4).</li>
+<li>On each incoming message, log the payload and sender info (IP + port).</li>
+<li>Use <code>nc -u 127.0.0.1 8081</code> or similar to send datagrams.</li>
+</ul>
+<p>Two important behaviors stand out:</p>
+<ol>
+<li>There is never a “connected” state; datagrams are just sent and received.</li>
+<li>You can stop and restart the server, and the client can keep sending without renegotiating any connection.</li>
+</ol>
+<p>That’s UDP’s stateless behavior in action.</p>
+<hr>
+<h2>Choosing Between TCP and UDP</h2>
+<p>A practical guideline: <strong>match the protocol to the problem</strong>.</p>
+<ul>
+<li>
+<p><strong>Pick TCP when</strong>:</p>
+<ul>
+<li>You need reliability and ordering (databases, secure chat, web apps, APIs).</li>
+<li>Packet loss or corruption is unacceptable.</li>
+<li>Per‑connection overhead is acceptable relative to data volume.</li>
+</ul>
+</li>
+<li>
+<p><strong>Pick UDP when</strong>:</p>
+<ul>
+<li>You can tolerate some loss or occasional corruption (games, live video, voice).</li>
+<li>Latency and bandwidth efficiency matter more than perfect delivery.</li>
+<li>You’re ready to implement just enough reliability at the application layer (e.g., sequence numbers in a game protocol).</li>
+</ul>
+</li>
+</ul>
+<p>Common examples:</p>
+<ul>
+<li><strong>DNS</strong> often uses UDP: small, stateless request‑response, easy to retry.</li>
+<li><strong>Streaming and gaming</strong> often leverage UDP to avoid TCP’s head‑of‑line blocking and heavy overhead, sometimes layering their own reliability on top.</li>
+<li><strong>Databases and critical business traffic</strong> almost always rely on TCP because correctness is more important than shaving a few milliseconds.</li>
+</ul>
+<hr>
+<h2>Final Mental Model</h2>
+<p>Here’s the way I now think about these protocols:</p>
+<ul>
+<li>TCP is like a <strong>reliable, ordered conversation</strong> with receipts and flow control. Slower, heavier, but safe.</li>
+<li>UDP is like <strong>throwing postcards</strong> as fast as possible. Some might get lost or arrive out of order, but you don’t pay for the overhead you don’t need.</li>
+</ul>
+<p>Understanding these trade‑offs, and seeing them in small code examples, makes it much easier to choose the right tool for any networked application I build next.</p>
+<hr>
+<h2>Reference Video</h2>
+<ul>
+<li>TCP vs UDP Crash Course: <a href="https://www.youtube.com/watch?v=qqRYkcta6IE">here</a></li>
+</ul>
+
+        </div>
+      </article>
+    </div>
+  </body>
+</html>
